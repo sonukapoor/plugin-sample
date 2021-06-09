@@ -1,59 +1,45 @@
 import {
-  Compiler,
   Component,
   ComponentFactory,
+  ComponentFactoryResolver,
   ComponentRef,
-  Injector,
-  OnInit,
+  Type,
   ViewChild,
   ViewContainerRef,
 } from '@angular/core';
-import { SystemJS } from 'utilities';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
-export class AppComponent implements OnInit {
-  private componentRef: ComponentRef<any>;
+export class AppComponent {
+  private componentRef: ComponentRef<any>|null = null;
 
   @ViewChild('viewContainer', { static: true, read: ViewContainerRef })
   viewContainer: ViewContainerRef;
 
-  constructor(
-    private readonly compiler: Compiler,
-    private readonly injector: Injector
-  ) {}
+  constructor(private readonly resolver: ComponentFactoryResolver) {}
 
-  ngOnInit(): void {
-    this.loadModule();
+  async loadPlugin1() {
+    const {Plugin1Component} = await import('plugins/plugin-1');
+    this.loadPlugin(Plugin1Component);
   }
 
-  private async loadModule() {
+  async loadPlugin2() {
+    const {Plugin2Component} = await import('plugins/plugin-2');
+    this.loadPlugin(Plugin2Component);
+  }
+
+  private async loadPlugin(component: Type<unknown>) {
     try {
-      const result = await SystemJS.import('assets/plugins/my-plugin.js');
-      const compiled = await this.compiler.compileModuleAndAllComponentsAsync(
-        result['PluginsModule']
-      );
-
-      const moduleRef = compiled.ngModuleFactory.create(this.injector);
-      const modCompRef = compiled.componentFactories.find(
-        (component) => component.selector === 'lib-plugins'
-      );
-
-      const compFactory =
-        moduleRef.componentFactoryResolver.resolveComponentFactory(
-          modCompRef.componentType
-        );
-
-      this.insertComponent(compFactory);
+      if (this.componentRef !== null) {
+        this.componentRef.destroy();
+      }
+      const factory = this.resolver.resolveComponentFactory(component);
+      this.componentRef = this.viewContainer.createComponent(factory);
     } catch (err) {
       console.log('Could not load module', err);
     }
-  }
-
-  private insertComponent(factory: ComponentFactory<any>) {
-    this.componentRef = this.viewContainer.createComponent(factory);
   }
 }
