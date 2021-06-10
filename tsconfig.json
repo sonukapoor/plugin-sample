@@ -16,13 +16,8 @@
       "dom"
     ],
     "paths": {
-      "plugins": [
-        "dist/plugins/plugins",
-        "dist/plugins"
-      ],
-      "utilities": [
-        "dist/utilities/utilities",
-        "dist/utilities"
+      "plugins/*": [
+        "dist/plugins/*"
       ]
     }
   },
